@@ -3,7 +3,7 @@ import requests
 from ultralytics import YOLO
 
 MODEL_PATH = "best.pt"
-MODEL_URL = "https://huggingface.co/Bilawalkhan709/helmet-detection-model/resolve/main/best.pt"
+MODEL_URL = "https://huggingface.co/Bilawalkhan709/helmet-detection-model/blob/main/best.pt"
 
 if not os.path.exists(MODEL_PATH):
     response = requests.get(MODEL_URL, timeout=300)
