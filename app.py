@@ -1,14 +1,15 @@
-import streamlit as st
+import os
+import requests
 from ultralytics import YOLO
-from PIL import Image
 
-st.title("Helmet Detection")
+MODEL_PATH = "best.pt"
+MODEL_URL = "https://huggingface.co/YOUR_USERNAME/helmet-detection-model/resolve/main/best.pt"
 
-model = YOLO("best.pt")
+if not os.path.exists(MODEL_PATH):
+    response = requests.get(MODEL_URL, timeout=300)
+    response.raise_for_status()
 
-file = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
+    with open(MODEL_PATH, "wb") as f:
+        f.write(response.content)
 
-if file:
-    image = Image.open(file).convert("RGB")
-    result = model(image)[0]
-    st.image(result.plot()[:, :, ::-1])
+model = YOLO(MODEL_PATH)
