@@ -1,0 +1,6 @@
+datasets/
+runs/
+*.mp4
+*.zip
+**pycache**/
+.venv/
