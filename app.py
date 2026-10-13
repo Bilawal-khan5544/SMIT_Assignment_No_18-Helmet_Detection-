@@ -121,7 +121,7 @@ with st.sidebar:
     st.divider()
 
     try:
-        if PROFILE_IMAGE_URL != ""C:\Users\khanb\Downloads\WhatsApp Unknown 2026-10-13 at 1.23.00 AM\Professional Charcoal Studio Headshot.png"":
+        if PROFILE_IMAGE_URL != "https://avatars.githubusercontent.com/u/274402734?v=4&size=64":
             st.image(PROFILE_IMAGE_URL, width=110)
         else:
             st.info("Add your profile photo URL in app.py.")
