@@ -23,7 +23,7 @@ MODEL_URL = (
 )
 
 # Replace with your actual image URL
-PROFILE_IMAGE_URL = "YOUR_IMAGE_URL"
+PROFILE_IMAGE_URL = "https://avatars.githubusercontent.com/u/274402734?v=4&size=64"
 
 # ---------------- CUSTOM CSS ----------------
 st.markdown("""
