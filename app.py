@@ -15,6 +15,16 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# ---------------- CONFIGURATION ----------------
+MODEL_PATH = "best.pt"
+MODEL_URL = (
+    "https://huggingface.co/Bilawalkhan709/"
+    "helmet-detection-model/resolve/main/best%20%282%29.pt"
+)
+
+# Replace with your actual image URL
+PROFILE_IMAGE_URL = "YOUR_IMAGE_URL"
+
 # ---------------- CUSTOM CSS ----------------
 st.markdown("""
 <style>
@@ -66,6 +76,19 @@ div.stButton > button:hover {
     background: #287092;
     color: white;
 }
+.profile {
+    text-align: center;
+    padding: 12px 0;
+}
+.profile-name {
+    font-weight: 700;
+    font-size: 17px;
+    color: #153659;
+}
+.profile-role {
+    font-size: 12px;
+    color: #60758b;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -94,8 +117,25 @@ with st.sidebar:
     4. Download the result image.
     """)
 
+    # Profile at bottom of sidebar
     st.divider()
-    st.caption("AI-Based Helmet Violation Detection")
+
+    try:
+        if PROFILE_IMAGE_URL != ""C:\Users\khanb\Downloads\WhatsApp Unknown 2026-10-13 at 1.23.00 AM\Professional Charcoal Studio Headshot.png"":
+            st.image(PROFILE_IMAGE_URL, width=110)
+        else:
+            st.info("Add your profile photo URL in app.py.")
+    except Exception:
+        st.caption("Profile photo could not be loaded.")
+
+    st.markdown(
+        '<div class="profile">'
+        '<div class="profile-name">Bilawal Khan</div>'
+        '<div class="profile-role">'
+        'Data Science Student | AI/ML Enthusiast'
+        '</div></div>',
+        unsafe_allow_html=True
+    )
 
 # ---------------- HEADER ----------------
 st.markdown("""
@@ -105,17 +145,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------------- MODEL LOADING ----------------
-# If best.pt is in the GitHub repository, it will load directly.
-# Otherwise, it downloads the model from Hugging Face.
-
-MODEL_PATH = "best.pt"
-
-MODEL_URL = (
-    "https://huggingface.co/Bilawalkhan709/"
-    "helmet-detection-model/resolve/main/best%20%282%29.pt"
-)
-
+# ---------------- LOAD MODEL ----------------
 @st.cache_resource
 def load_model():
     if not os.path.exists(MODEL_PATH):
@@ -128,8 +158,7 @@ def load_model():
 
         if len(response.content) < 1000:
             raise RuntimeError(
-                "Downloaded model file is too small. "
-                "Check the Hugging Face model filename."
+                "Model file is too small. Check its Hugging Face filename."
             )
 
         with open(MODEL_PATH, "wb") as file:
@@ -144,8 +173,8 @@ except Exception as error:
     st.error("Model could not be loaded.")
     st.code(str(error))
     st.info(
-        "Check that your Hugging Face repository is public "
-        "and MODEL_URL contains the exact model filename."
+        "Check that the Hugging Face repository is public "
+        "and the model filename is correct."
     )
     st.stop()
 
@@ -172,20 +201,15 @@ else:
 
     if st.button("🔍 Run Detection", use_container_width=True):
         with st.spinner("Analyzing image..."):
-            image_array = np.array(image)
-
             results = model.predict(
-                source=image_array,
+                source=np.array(image),
                 conf=confidence,
                 verbose=False
             )
 
             result = results[0]
-
-            # YOLO plot returns BGR; convert to RGB for Streamlit.
-            annotated_bgr = result.plot()
             annotated_rgb = cv2.cvtColor(
-                annotated_bgr,
+                result.plot(),
                 cv2.COLOR_BGR2RGB
             )
 
@@ -198,7 +222,6 @@ else:
                 for box in result.boxes
             ]
 
-    # Show results after detection
     if "annotated_image" in st.session_state:
         with right:
             st.markdown("### Detection Results")
@@ -208,27 +231,26 @@ else:
             )
 
         detections = st.session_state["detections"]
-
-        st.divider()
-        st.subheader("📊 Detection Summary")
-
         total = len(detections)
 
-        # Change these keywords if your model uses different class names.
+        # Adjust keyword matching to your model's class names
         no_helmet = sum(
             1 for item in detections
-            if "no_helmet" in item["label"].lower()
-            or "without_helmet" in item["label"].lower()
-            or "no helmet" in item["label"].lower()
+            if any(word in item["label"].lower() for word in [
+                "no_helmet", "without_helmet", "no helmet"
+            ])
         )
 
         helmet = sum(
             1 for item in detections
             if "helmet" in item["label"].lower()
-            and "no_helmet" not in item["label"].lower()
-            and "without_helmet" not in item["label"].lower()
-            and "no helmet" not in item["label"].lower()
+            and not any(word in item["label"].lower() for word in [
+                "no_helmet", "without_helmet", "no helmet"
+            ])
         )
+
+        st.divider()
+        st.subheader("📊 Detection Summary")
 
         col1, col2, col3 = st.columns(3)
 
@@ -258,20 +280,15 @@ else:
 
         if detections:
             st.markdown("### Detection Details")
-
             for index, item in enumerate(detections, start=1):
                 st.write(
                     f"{index}. **{item['label']}** — "
                     f"Confidence: {item['confidence']:.1%}"
                 )
         else:
-            st.warning(
-                "No objects detected. Try another image or "
-                "adjust the confidence threshold."
-            )
+            st.warning("No objects detected. Try another image.")
 
-        # Download annotated image
-        success, encoded_image = cv2.imencode(
+        success, encoded = cv2.imencode(
             ".jpg",
             cv2.cvtColor(
                 st.session_state["annotated_image"],
@@ -282,7 +299,7 @@ else:
         if success:
             st.download_button(
                 "⬇️ Download Detection Image",
-                data=encoded_image.tobytes(),
+                data=encoded.tobytes(),
                 file_name="helmet_detection_result.jpg",
                 mime="image/jpeg",
                 use_container_width=True
